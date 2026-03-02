@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ANTAR PAHALE - Layanan Kurir JABODETABEK</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        
+        :root {
+            --brand-green: #16a34a;
+            --brand-dark: #14532d;
+        }
+
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background: #f8fafc;
+            color: #1e293b;
+        }
+
+        .gradient-header {
+            background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+
+        .modal-overlay {
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+        }
+
+        /* Music Bar Animation */
+        .music-bar {
+            animation: music-flow 1.2s ease-in-out infinite;
+        }
+        @keyframes music-flow {
+            0%, 100% { height: 4px; }
+            50% { height: 14px; }
+        }
+
+        .pulse-soft {
+            animation: pulse-border 2s infinite;
+        }
+        @keyframes pulse-border {
+            0% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(37, 211, 102, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-0 sm:p-4" onclick="initAudioOnFirstClick()" onscroll="initAudioOnFirstClick()" ontouchstart="initAudioOnFirstClick()">
+
+    <!-- Floating Music Control -->
+    <div class="fixed top-4 right-4 z-[150]">
+        <button id="music-toggle" onclick="toggleMusic(event)" class="bg-white/90 backdrop-blur shadow-lg border border-gray-100 p-3 rounded-2xl flex items-center gap-2 hover:scale-105 transition-all active:scale-95 group">
+            <div id="music-bars" class="hidden flex items-end gap-0.5 h-3">
+                <div class="w-1 bg-green-500 music-bar" style="animation-delay: 0s"></div>
+                <div class="w-1 bg-green-500 music-bar" style="animation-delay: 0.2s"></div>
+                <div class="w-1 bg-green-500 music-bar" style="animation-delay: 0.4s"></div>
+            </div>
+            <i id="music-icon" class="fa-solid fa-volume-high text-gray-400 group-hover:text-green-600"></i>
+            <span id="music-status" class="text-[10px] font-bold text-gray-500 uppercase tracking-tighter">Jazz Off</span>
+        </button>
+    </div>
+
+    <!-- Modal Info Kilometer (Baru) -->
+    <div id="km-info-modal" class="fixed inset-0 z-[200] hidden flex items-center justify-center p-6 modal-overlay">
+        <div class="bg-white rounded-[2rem] w-full max-w-xs p-8 shadow-2xl scale-in transform transition-transform duration-300 border border-gray-100">
+            <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i class="fa-solid fa-map-location-dot text-2xl text-blue-600"></i>
+            </div>
+            <h3 class="text-lg font-extrabold text-center text-gray-900 mb-4 tracking-tight uppercase">Info Jarak</h3>
+            <p class="text-xs text-gray-600 text-center font-semibold leading-relaxed mb-8">
+                Untuk para customer, bisa lihat jarak kilometer di <span class="text-blue-600 font-bold">maps browser / gmaps pribadi</span>, dan input jumlah kilometer tersebut pada aplikasi ini.
+            </p>
+            <button onclick="toggleModal('km-info-modal')" class="w-full py-4 bg-gray-900 text-white rounded-2xl font-bold active:scale-95 transition-all">
+                SAYA MENGERTI
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal Metode Bayar -->
+    <div id="payment-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-6 modal-overlay">
+        <div class="bg-white rounded-[2rem] w-full max-w-xs p-8 shadow-2xl scale-in transform transition-transform duration-300">
+            <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i class="fa-solid fa-credit-card text-2xl text-blue-600"></i>
+            </div>
+            <h3 class="text-lg font-extrabold text-center text-gray-900 mb-4 tracking-tight uppercase">Metode Bayar</h3>
+            <div class="space-y-4 mb-8">
+                <div class="p-4 rounded-2xl border-2 border-gray-100 bg-gray-50 text-center">
+                    <p class="text-xs font-bold text-gray-400 uppercase mb-1">Opsi 1</p>
+                    <p class="text-sm font-bold text-gray-800">TUNAI KE KURIR</p>
+                </div>
+                <div class="p-4 rounded-2xl border-2 border-blue-100 bg-blue-50 text-center">
+                    <p class="text-xs font-bold text-blue-400 uppercase mb-1">Opsi 2 (TRANSFER)</p>
+                    <p class="text-xs font-bold text-gray-500 mb-1">BCA</p>
+                    <p class="text-lg font-black text-blue-700 tracking-wider">7050327234</p>
+                    <p class="text-xs font-bold text-gray-700 uppercase">A.N Austin Putra Pratama</p>
+                </div>
+            </div>
+            <button onclick="toggleModal('payment-modal')" class="w-full py-4 bg-gray-900 text-white rounded-2xl font-bold active:scale-95 transition-all">
+                TUTUP
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="w-full max-w-md glass-card sm:rounded-[2.5rem] shadow-2xl overflow-hidden border border-white/20 relative" id="app-container">
+        
+        <div class="gradient-header p-8 text-white relative overflow-hidden">
+            <div class="relative z-10 flex justify-between items-start">
+                <div>
+                    <h1 class="text-3xl font-extrabold tracking-tighter uppercase">Antar <span class="text-green-200">Pahale</span></h1>
+                    <p class="text-[10px] font-bold opacity-80 mt-1 uppercase tracking-widest">Spesialis Lebaran Jabodetabek</p>
+                </div>
+                <div class="bg-white/20 p-3 rounded-2xl backdrop-blur-md">
+                    <i class="fa-solid fa-motorcycle text-2xl"></i>
+                </div>
+            </div>
+            <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
+        </div>
+
+        <div class="p-6 space-y-6">
+            <div class="space-y-2">
+                <div class="flex justify-between items-end">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Kategori Paket</label>
+                    <button onclick="toggleModal('payment-modal')" class="text-[10px] font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-lg hover:bg-blue-100 transition-all uppercase">
+                        Bayar
+                    </button>
+                </div>
+                <div class="grid grid-cols-3 gap-2">
+                    <button onclick="setService('Paket Biasa')" class="service-btn active p-3 rounded-2xl border-2 border-green-600 bg-green-50 text-green-700 text-[10px] font-black uppercase transition-all">
+                        Paket
+                    </button>
+                    <button onclick="setService('Hampers Lebaran')" class="service-btn p-3 rounded-2xl border-2 border-gray-100 bg-white text-gray-400 text-[10px] font-black uppercase transition-all">
+                        Hampers
+                    </button>
+                    <button onclick="setService('Parcel Lebaran')" class="service-btn p-3 rounded-2xl border-2 border-gray-100 bg-white text-gray-400 text-[10px] font-black uppercase transition-all">
+                        Parcel
+                    </button>
+                </div>
+                <input type="hidden" id="item-type" value="Paket Biasa">
+            </div>
+
+            <div class="space-y-4">
+                <div class="space-y-4">
+                    <div class="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                        <label class="block text-[10px] font-bold text-gray-400 uppercase mb-2">Penjemputan</label>
+                        <select id="pickup-region" onchange="calculateTotal()" class="w-full p-3 rounded-xl border border-gray-200 text-sm font-bold bg-white mb-2 outline-none focus:border-green-500">
+                            <option value="">PILIH WILAYAH...</option>
+                        </select>
+                        <textarea id="pickup-detail" rows="2" placeholder="Detail Alamat Lengkap..." class="w-full p-3 text-xs rounded-xl border border-gray-200 bg-white focus:border-green-500 outline-none"></textarea>
+                    </div>
+
+                    <div class="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                        <label class="block text-[10px] font-bold text-gray-400 uppercase mb-2">Pengantaran</label>
+                        <select id="drop-region" onchange="calculateTotal()" class="w-full p-3 rounded-xl border border-gray-200 text-sm font-bold bg-white mb-2 outline-none focus:border-red-500">
+                            <option value="">PILIH WILAYAH...</option>
+                        </select>
+                        <textarea id="drop-detail" rows="2" placeholder="Detail Alamat Lengkap..." class="w-full p-3 text-xs rounded-xl border border-gray-200 bg-white focus:border-red-500 outline-none"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-1">
+                    <div class="flex items-center gap-1 mb-1">
+                        <label class="text-[10px] font-bold text-gray-400 uppercase">Jarak (KM)</label>
+                        <button onclick="toggleModal('km-info-modal')" class="text-blue-500 hover:text-blue-600 transition-colors">
+                            <i class="fa-solid fa-circle-info text-[10px]"></i>
+                        </button>
+                    </div>
+                    <input type="number" id="manual-km" placeholder="Input KM" step="0.1" oninput="calculateTotal()" class="w-full p-3 rounded-xl border border-gray-200 font-bold text-sm outline-none focus:border-green-500">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Berat (KG)</label>
+                    <input type="number" id="weight" value="1" min="1" oninput="calculateTotal()" class="w-full p-3 rounded-xl border border-gray-200 font-bold text-sm outline-none focus:border-green-500">
+                </div>
+            </div>
+
+            <div class="bg-gray-900 rounded-[2rem] p-6 text-white shadow-xl">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-gray-500">Total Ongkir</span>
+                    <span id="display-km-badge" class="text-[10px] font-bold bg-green-500/20 text-green-400 px-3 py-1 rounded-full">0.0 km</span>
+                </div>
+                <div class="flex justify-between items-end">
+                    <span class="text-xs text-gray-400 uppercase font-bold">Total Tagihan</span>
+                    <span id="display-total" class="text-3xl font-black">Rp 12.500</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="px-6 pb-8 space-y-3">
+            <button onclick="downloadInfo()" class="w-full py-4 bg-white text-gray-900 border-2 border-gray-900 rounded-2xl font-black uppercase text-xs flex items-center justify-center gap-2">
+                <i class="fa-solid fa-file-image"></i> Simpan Nota
+            </button>
+            <button onclick="contactDriver()" class="w-full py-4 bg-[#25D366] text-white rounded-2xl font-black uppercase text-xs flex items-center justify-center gap-2 shadow-lg shadow-green-100 pulse-soft">
+                <i class="fa-brands fa-whatsapp text-xl"></i> Hubungi Driver
+            </button>
+        </div>
+
+        <div class="text-center py-4 bg-gray-50 border-t border-gray-100">
+            <p class="text-[9px] text-gray-400 font-black uppercase tracking-widest">Antar Pahale © 2024</p>
+        </div>
+    </div>
+
+    <script>
+        const REGIONS = {
+            "Jakarta Pusat": { lat: -6.1818, lon: 106.8223 },
+            "Jakarta Selatan": { lat: -6.2715, lon: 106.8058 },
+            "Jakarta Barat": { lat: -6.1674, lon: 106.7637 },
+            "Jakarta Utara": { lat: -6.1214, lon: 106.8856 },
+            "Jakarta Timur": { lat: -6.2256, lon: 106.9004 },
+            "Bogor": { lat: -6.5971, lon: 106.7952 },
+            "Depok": { lat: -6.4025, lon: 106.7942 },
+            "Tangerang": { lat: -6.1783, lon: 106.6319 },
+            "Bekasi": { lat: -6.2383, lon: 106.9756 }
+        };
+
+        const TARIF_KM = 2600;
+        const TARIF_MIN_4KM = 12500;
+        const DRIVER_PHONE = "6285693503454";
+
+        let audioCtx;
+        let isMusicPlaying = false;
+        let melodyInterval;
+        let audioInitialized = false;
+
+        const jazzNotes = [
+            { f: 261.63, d: 2.5, t: 0 }, { f: 329.63, d: 2.5, t: 400 }, { f: 392.00, d: 2.5, t: 800 }, { f: 493.88, d: 2.5, t: 1200 },
+            { f: 220.00, d: 2.5, t: 1800 }, { f: 261.63, d: 2.5, t: 2200 }, { f: 329.63, d: 2.5, t: 2600 }, { f: 392.00, d: 2.5, t: 3000 },
+            { f: 293.66, d: 2.5, t: 3600 }, { f: 349.23, d: 2.5, t: 4000 }, { f: 440.00, d: 2.5, t: 4400 }, { f: 523.25, d: 2.5, t: 4800 },
+            { f: 196.00, d: 2.5, t: 5400 }, { f: 246.94, d: 2.5, t: 5800 }, { f: 293.66, d: 2.5, t: 6200 }, { f: 349.23, d: 2.5, t: 6600 } 
+        ];
+
+        function initAudioOnFirstClick() {
+            if (audioInitialized) return;
+            startMusic();
+            audioInitialized = true;
+            document.body.onclick = null;
+            document.body.onscroll = null;
+            document.body.ontouchstart = null;
+        }
+
+        function playJazzNote(freq, dur) {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const now = audioCtx.currentTime;
+            const osc1 = audioCtx.createOscillator(); 
+            const osc2 = audioCtx.createOscillator(); 
+            const gain = audioCtx.createGain();
+            osc1.type = 'sine';
+            osc1.frequency.setValueAtTime(freq, now);
+            osc2.type = 'triangle';
+            osc2.frequency.setValueAtTime(freq * 1.001, now); 
+            gain.gain.setValueAtTime(0, now);
+            gain.gain.linearRampToValueAtTime(0.06, now + 0.1); 
+            gain.gain.exponentialRampToValueAtTime(0.001, now + dur); 
+            osc1.connect(gain);
+            osc2.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc1.start(now);
+            osc2.start(now);
+            osc1.stop(now + dur);
+            osc2.stop(now + dur);
+        }
+
+        function playJazzSequence() {
+            jazzNotes.forEach(note => {
+                setTimeout(() => { if (isMusicPlaying) playJazzNote(note.f, note.d); }, note.t);
+            });
+        }
+
+        function startMusic() {
+            if (isMusicPlaying) return;
+            isMusicPlaying = true;
+            updateUI(true);
+            playJazzSequence();
+            melodyInterval = setInterval(playJazzSequence, 7200); 
+        }
+
+        function stopMusic() {
+            isMusicPlaying = false;
+            updateUI(false);
+            clearInterval(melodyInterval);
+        }
+
+        function toggleMusic(e) {
+            if (e) e.stopPropagation();
+            if (isMusicPlaying) stopMusic();
+            else startMusic();
+        }
+
+        function updateUI(playing) {
+            const status = document.getElementById('music-status');
+            const bars = document.getElementById('music-bars');
+            const icon = document.getElementById('music-icon');
+            if (playing) {
+                status.innerText = "Jazz On"; status.classList.add('text-green-600');
+                bars.classList.remove('hidden'); icon.classList.replace('fa-volume-xmark', 'fa-volume-high');
+                icon.classList.add('text-green-600');
+            } else {
+                status.innerText = "Jazz Off"; status.classList.remove('text-green-600');
+                bars.classList.add('hidden'); icon.classList.replace('fa-volume-high', 'fa-volume-xmark');
+                icon.classList.remove('text-green-600');
+            }
+        }
+
+        const pickupSelect = document.getElementById('pickup-region');
+        const dropSelect = document.getElementById('drop-region');
+        Object.keys(REGIONS).sort().forEach(r => {
+            pickupSelect.add(new Option(r, r));
+            dropSelect.add(new Option(r, r));
+        });
+
+        function setService(type) {
+            document.getElementById('item-type').value = type;
+            document.querySelectorAll('.service-btn').forEach(b => {
+                b.classList.remove('active', 'border-green-600', 'bg-green-50', 'text-green-700');
+                b.classList.add('border-gray-100', 'bg-white', 'text-gray-400');
+            });
+            event.target.classList.add('active', 'border-green-600', 'bg-green-50', 'text-green-700');
+        }
+
+        function calculateTotal() {
+            const pk = pickupSelect.value;
+            const dr = dropSelect.value;
+            const mKm = parseFloat(document.getElementById('manual-km').value);
+            const wt = parseFloat(document.getElementById('weight').value) || 1;
+            let km = 0;
+            if (!isNaN(mKm)) km = mKm;
+            else if (pk && dr) km = getDist(pk, dr);
+            let total = (km <= 4) ? TARIF_MIN_4KM : km * TARIF_KM;
+            if (wt > 15) total += (Math.ceil(wt - 15) * 10000);
+            document.getElementById('display-km-badge').innerText = km.toFixed(1) + " km";
+            document.getElementById('display-total').innerText = "Rp " + Math.round(total).toLocaleString('id-ID');
+            return { km, total, wt };
+        }
+
+        function getDist(r1, r2) {
+            if (r1 === r2) return 3.5;
+            const p1 = REGIONS[r1], p2 = REGIONS[r2];
+            const R = 6371;
+            const dLat = (p2.lat-p1.lat) * Math.PI/180;
+            const dLon = (p2.lon-p1.lon) * Math.PI/180;
+            const a = Math.sin(dLat/2)**2 + Math.cos(p1.lat*Math.PI/180)*Math.cos(p2.lat*Math.PI/180)*Math.sin(dLon/2)**2;
+            return parseFloat((R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)) * 1.3).toFixed(1));
+        }
+
+        function contactDriver() {
+            const data = calculateTotal();
+            const text = encodeURIComponent(`PESANAN ANTAR PAHALE
+--------------------------
+KATEGORI: ${document.getElementById('item-type').value}
+TITIK JEMPUT: ${pickupSelect.value} (${document.getElementById('pickup-detail').value})
+TITIK ANTAR: ${dropSelect.value} (${document.getElementById('drop-detail').value})
+DETAIL: ${data.wt} KG | ${data.km.toFixed(1)} KM
+TOTAL: Rp ${Math.round(data.total).toLocaleString('id-ID')}`);
+            window.open(`https://wa.me/${DRIVER_PHONE}?text=${text}`, '_blank');
+        }
+
+        function downloadInfo() {
+            html2canvas(document.getElementById('app-container'), { scale: 2 }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `Nota_Pahale.png`;
+                link.href = canvas.toDataURL();
+                link.click();
+            });
+        }
+
+        function toggleModal(id) { document.getElementById(id).classList.toggle('hidden'); }
+    </script>
+</body>
+</html>
